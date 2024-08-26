@@ -759,6 +759,11 @@ namespace FlaxEditor
             UI.AddStatusMessage("Saved!");
         }
 
+        public void OpenRecent()
+        {
+            UI.AddStatusMessage("Open recent");
+        }
+
         /// <summary>
         /// Saves all content (assets, etc.).
         /// </summary>

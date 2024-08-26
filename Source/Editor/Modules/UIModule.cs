@@ -45,6 +45,7 @@ namespace FlaxEditor.Modules
         private ContextMenuButton _menuFileGenerateScriptsProjectFiles;
         private ContextMenuButton _menuFileRecompileScripts;
         private ContextMenuButton _menuFileSaveAll;
+        private ContextMenuButton _menuFileOpenRecent;
         private ContextMenuButton _menuEditUndo;
         private ContextMenuButton _menuEditRedo;
         private ContextMenuButton _menuEditCut;
@@ -531,6 +532,8 @@ namespace FlaxEditor.Modules
             _menuFileSaveScenes = cm.AddButton("Save scenes", inputOptions.SaveScenes, Editor.Scene.SaveScenes);
             _menuFileCloseScenes = cm.AddButton("Close scenes", inputOptions.CloseScenes, Editor.Scene.CloseAllScenes);
             _menuFileReloadScenes = cm.AddButton("Reload scenes", Editor.Scene.ReloadScenes);
+            cm.AddSeparator();
+            _menuFileOpenRecent = cm.AddButton("Open recent", inputOptions.OpenRecent, Editor.OpenRecent);
             cm.AddSeparator();
             _menuFileOpenScriptsProject = cm.AddButton("Open scripts project", inputOptions.OpenScriptsProject, Editor.CodeEditing.OpenSolution);
             _menuFileGenerateScriptsProjectFiles = cm.AddButton("Generate scripts project files", inputOptions.GenerateScriptsProject, Editor.ProgressReporting.GenerateScriptsProjectFiles.RunAsync);
