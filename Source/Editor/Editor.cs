@@ -56,6 +56,7 @@ namespace FlaxEditor
         private bool _autoSaveNow;
         private Guid _startupSceneCmdLine;
 
+        private const string ProjectDataLastProject = "LastProject";
         private const string ProjectDataLastScene = "LastScene";
         private const string ProjectDataLastSceneSpawn = "LastSceneSpawn";
 
@@ -175,6 +176,11 @@ namespace FlaxEditor
         /// <summary>
         /// The editor per-project cache manager.
         /// </summary>
+        public EditorCacheModule EditorCache;
+
+        /// <summary>
+        /// The editor per-project cache manager.
+        /// </summary>
         public ProjectCacheModule ProjectCache;
 
         /// <summary>
@@ -276,6 +282,7 @@ namespace FlaxEditor
             // Create common editor modules
             Profiler.BeginEvent("Modules");
             RegisterModule(Options = new OptionsModule(this));
+            RegisterModule(EditorCache = new EditorCacheModule(this));
             RegisterModule(ProjectCache = new ProjectCacheModule(this));
             RegisterModule(Scene = new SceneModule(this));
             RegisterModule(Windows = new WindowsModule(this));
@@ -316,6 +323,17 @@ namespace FlaxEditor
                 Profiler.EndEvent();
             }
             _areModulesInited = true;
+
+            // Preload last opened project
+            try
+            {
+                var startupProjectMode = Options.Options.General.StartupProjectMode;
+                if (startupProjectMode == GeneralOptions.StartupProjectModes.LastOpened)
+                {
+                    EditorCache.TryGetCustomData(ProjectDataLastProject, out string lastProjectId);
+                    Log(lastProjectId);
+                }
+            } catch (Exception) { }
 
             // Preload initial scene asset
             try
@@ -694,6 +712,12 @@ namespace FlaxEditor
                 var lastSceneSpawn = Windows.EditWin.Viewport.ViewRay;
                 ProjectCache.SetCustomData(ProjectDataLastScene, JsonSerializer.Serialize(lastSceneIds));
                 ProjectCache.SetCustomData(ProjectDataLastSceneSpawn, JsonSerializer.Serialize(lastSceneSpawn));
+            }
+
+            // Cache last opened project
+            {
+                var lastProject = GameProject.ProjectPath;
+                EditorCache.SetCustomData(ProjectDataLastProject, JsonSerializer.Serialize(lastProject));
             }
 
             // Cleanup
