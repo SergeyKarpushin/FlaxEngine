@@ -1,13 +1,12 @@
 // Copyright (c) 2012-2024 Wojciech Figat. All rights reserved.
 
-using System;
-using System.IO;
-using System.Collections.Generic;
+using FlaxEditor.Content.Settings;
 using FlaxEditor.Gizmo;
 using FlaxEditor.GUI;
 using FlaxEditor.GUI.ContextMenu;
 using FlaxEditor.GUI.Dialogs;
 using FlaxEditor.GUI.Input;
+using FlaxEditor.Options;
 using FlaxEditor.Progress.Handlers;
 using FlaxEditor.SceneGraph;
 using FlaxEditor.Utilities;
@@ -16,10 +15,11 @@ using FlaxEditor.Windows;
 using FlaxEngine;
 using FlaxEngine.GUI;
 using FlaxEngine.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using DockHintWindow = FlaxEditor.GUI.Docking.DockHintWindow;
 using MasterDockPanel = FlaxEditor.GUI.Docking.MasterDockPanel;
-using FlaxEditor.Content.Settings;
-using FlaxEditor.Options;
 
 namespace FlaxEditor.Modules
 {
@@ -37,6 +37,7 @@ namespace FlaxEditor.Modules
         private bool _progressFailed;
 
         ContextMenuSingleSelectGroup<int> _numberOfClientsGroup = new ContextMenuSingleSelectGroup<int>();
+        ContextMenuSingleSelectGroup<string> _recentProjectsGroup = new ContextMenuSingleSelectGroup<string> { };
 
         private ContextMenuButton _menuFileSaveScenes;
         private ContextMenuButton _menuFileReloadScenes;
@@ -45,7 +46,6 @@ namespace FlaxEditor.Modules
         private ContextMenuButton _menuFileGenerateScriptsProjectFiles;
         private ContextMenuButton _menuFileRecompileScripts;
         private ContextMenuButton _menuFileSaveAll;
-        private ContextMenuButton _menuFileOpenRecent;
         private ContextMenuButton _menuEditUndo;
         private ContextMenuButton _menuEditRedo;
         private ContextMenuButton _menuEditCut;
@@ -513,6 +513,11 @@ namespace FlaxEditor.Modules
             };
 
             Editor.Options.OptionsChanged += options => { _numberOfClientsGroup.Selected = options.Interface.NumberOfGameClientsToLaunch; };
+
+            // fill in recent projects submenu
+            Editor.EditorCache.TryGetCustomData(Editor.ProjectDataRecentProjects, out string lastProjectPath);
+            _recentProjectsGroup.AddItem(Path.GetFileName(lastProjectPath), lastProjectPath, null, lastProjectPath);
+            _recentProjectsGroup.SelectedChanged = value => Editor.OpenProject(value);
         }
 
         private void InitMainMenu(RootControl mainWindow)
@@ -532,8 +537,11 @@ namespace FlaxEditor.Modules
             _menuFileSaveScenes = cm.AddButton("Save scenes", inputOptions.SaveScenes, Editor.Scene.SaveScenes);
             _menuFileCloseScenes = cm.AddButton("Close scenes", inputOptions.CloseScenes, Editor.Scene.CloseAllScenes);
             _menuFileReloadScenes = cm.AddButton("Reload scenes", Editor.Scene.ReloadScenes);
+
             cm.AddSeparator();
-            _menuFileOpenRecent = cm.AddButton("Open recent", inputOptions.OpenRecent, Editor.OpenRecent);
+            var recentProjectSubMenu = cm.AddChildMenu("Open recent project");
+            _recentProjectsGroup.AddItemsToContextMenu(recentProjectSubMenu.ContextMenu);
+
             cm.AddSeparator();
             _menuFileOpenScriptsProject = cm.AddButton("Open scripts project", inputOptions.OpenScriptsProject, Editor.CodeEditing.OpenSolution);
             _menuFileGenerateScriptsProjectFiles = cm.AddButton("Generate scripts project files", inputOptions.GenerateScriptsProject, Editor.ProgressReporting.GenerateScriptsProjectFiles.RunAsync);
