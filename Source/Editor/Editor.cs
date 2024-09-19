@@ -56,7 +56,7 @@ namespace FlaxEditor
         private bool _autoSaveNow;
         private Guid _startupSceneCmdLine;
 
-        public const string ProjectDataRecentProjects = "RecentProjects";
+        public const string EditorRecentProjects = "RecentProjects";
         private const string ProjectDataLastScene = "LastScene";
         private const string ProjectDataLastSceneSpawn = "LastSceneSpawn";
 
@@ -703,10 +703,26 @@ namespace FlaxEditor
                 ProjectCache.SetCustomData(ProjectDataLastSceneSpawn, JsonSerializer.Serialize(lastSceneSpawn));
             }
 
-            // Cache last opened project
+            // Cache last opened projects (maximum 5 projects)
             {
-                var lastProject = GameProject.ProjectPath;
-                EditorCache.SetCustomData(ProjectDataRecentProjects, lastProject);
+                EditorCache.TryGetCustomData(EditorRecentProjects, out string recentProjectsValue);
+                List<string> recentProjects;
+                if (recentProjectsValue == null)
+                {
+                    recentProjects = new List<string>();
+                }
+                else
+                {
+                    recentProjects = JsonSerializer.Deserialize<List<string>>(recentProjectsValue);
+                }
+                var currentProject = GameProject.ProjectPath;
+                if (!recentProjects.Contains(currentProject))
+                {
+                    recentProjects.Add(currentProject);
+                    if (recentProjects.Count > 5) recentProjects.RemoveAt(0);
+                    EditorCache.SetCustomData(EditorRecentProjects, JsonSerializer.Serialize(recentProjects));
+                }
+
             }
 
             // Cleanup

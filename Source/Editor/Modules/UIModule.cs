@@ -515,9 +515,24 @@ namespace FlaxEditor.Modules
             Editor.Options.OptionsChanged += options => { _numberOfClientsGroup.Selected = options.Interface.NumberOfGameClientsToLaunch; };
 
             // fill in recent projects submenu
-            Editor.EditorCache.TryGetCustomData(Editor.ProjectDataRecentProjects, out string lastProjectPath);
-            _recentProjectsGroup.AddItem(Path.GetFileName(lastProjectPath), lastProjectPath, null, lastProjectPath);
-            _recentProjectsGroup.SelectedChanged = value => Editor.OpenProject(value);
+            Editor.EditorCache.TryGetCustomData(Editor.EditorRecentProjects, out string recentProjectsVar);
+            if (recentProjectsVar != null)
+            {
+                List<string> recentProjects = JsonSerializer.Deserialize<List<string>>(recentProjectsVar);
+                // always put current project first
+                var current = Editor.GameProject.ProjectPath;
+                _recentProjectsGroup.AddItem(Path.GetFileName(current), current, null, current);
+
+                for (int i = recentProjects.Count - 1; i >= 0; i--)
+                {
+                    if (recentProjects[i] == current) continue;
+                    var project = recentProjects[i].Replace("\"", "");
+                    var projectNormalized = StringUtils.NormalizePath(project);
+                    _recentProjectsGroup.AddItem(Path.GetFileName(projectNormalized), projectNormalized, null, projectNormalized);
+                }
+                _recentProjectsGroup.SelectedChanged = value => Editor.OpenProject(value);
+
+            }
         }
 
         private void InitMainMenu(RootControl mainWindow)
