@@ -174,7 +174,7 @@ namespace FlaxEditor
         public OptionsModule Options;
 
         /// <summary>
-        /// The editor per-project cache manager.
+        /// The editor cache manager.
         /// </summary>
         public EditorCacheModule EditorCache;
 
@@ -701,28 +701,6 @@ namespace FlaxEditor
                 var lastSceneSpawn = Windows.EditWin.Viewport.ViewRay;
                 ProjectCache.SetCustomData(ProjectDataLastScene, JsonSerializer.Serialize(lastSceneIds));
                 ProjectCache.SetCustomData(ProjectDataLastSceneSpawn, JsonSerializer.Serialize(lastSceneSpawn));
-            }
-
-            // Cache last opened projects (maximum 5 projects)
-            {
-                EditorCache.TryGetCustomData(EditorRecentProjects, out string recentProjectsValue);
-                List<string> recentProjects;
-                if (recentProjectsValue == null)
-                {
-                    recentProjects = new List<string>();
-                }
-                else
-                {
-                    recentProjects = JsonSerializer.Deserialize<List<string>>(recentProjectsValue);
-                }
-                var currentProject = GameProject.ProjectPath;
-                if (!recentProjects.Contains(currentProject))
-                {
-                    recentProjects.Add(currentProject);
-                    if (recentProjects.Count > 5) recentProjects.RemoveAt(0);
-                    EditorCache.SetCustomData(EditorRecentProjects, JsonSerializer.Serialize(recentProjects));
-                }
-
             }
 
             // Cleanup

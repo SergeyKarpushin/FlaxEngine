@@ -514,25 +514,32 @@ namespace FlaxEditor.Modules
 
             Editor.Options.OptionsChanged += options => { _numberOfClientsGroup.Selected = options.Interface.NumberOfGameClientsToLaunch; };
 
+            RebuildRecentProjectsCacheAndSubMenu();
+        }
+
+        private void RebuildRecentProjectsCacheAndSubMenu()
+        {
             // fill in recent projects submenu
             Editor.EditorCache.TryGetCustomData(Editor.EditorRecentProjects, out string recentProjectsVar);
-            if (recentProjectsVar != null)
+            var recentProjects = (recentProjectsVar == null) ?
+                new List<string>() : JsonSerializer.Deserialize<List<string>>(recentProjectsVar);
+
+            var current = Editor.GameProject.ProjectPath;
+            // always put current project first
+            recentProjects.Remove(current);
+            recentProjects.Add(current);
+            if (recentProjects.Count > 5) recentProjects.RemoveAt(0);
+
+            // add the submenu items in the reverse order
+            for (int i = recentProjects.Count - 1; i >= 0; i--)
             {
-                List<string> recentProjects = JsonSerializer.Deserialize<List<string>>(recentProjectsVar);
-                // always put current project first
-                var current = Editor.GameProject.ProjectPath;
-                _recentProjectsGroup.AddItem(Path.GetFileName(current), current, null, current);
-
-                for (int i = recentProjects.Count - 1; i >= 0; i--)
-                {
-                    if (recentProjects[i] == current) continue;
-                    var project = recentProjects[i].Replace("\"", "");
-                    var projectNormalized = StringUtils.NormalizePath(project);
-                    _recentProjectsGroup.AddItem(Path.GetFileName(projectNormalized), projectNormalized, null, projectNormalized);
-                }
-                _recentProjectsGroup.SelectedChanged = value => Editor.OpenProject(value);
-
+                var project = recentProjects[i].Replace("\"", "");
+                var projectNormalized = StringUtils.NormalizePath(project);
+                _recentProjectsGroup.AddItem(Path.GetFileName(projectNormalized), projectNormalized, null, projectNormalized);
             }
+            _recentProjectsGroup.SelectedChanged = value => Editor.OpenProject(value);
+
+            Editor.EditorCache.SetCustomData(Editor.EditorRecentProjects, JsonSerializer.Serialize(recentProjects));
         }
 
         private void InitMainMenu(RootControl mainWindow)
