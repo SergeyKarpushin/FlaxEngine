@@ -1,13 +1,12 @@
 // Copyright (c) 2012-2024 Wojciech Figat. All rights reserved.
 
-using System;
-using System.IO;
-using System.Collections.Generic;
+using FlaxEditor.Content.Settings;
 using FlaxEditor.Gizmo;
 using FlaxEditor.GUI;
 using FlaxEditor.GUI.ContextMenu;
 using FlaxEditor.GUI.Dialogs;
 using FlaxEditor.GUI.Input;
+using FlaxEditor.Options;
 using FlaxEditor.Progress.Handlers;
 using FlaxEditor.SceneGraph;
 using FlaxEditor.Utilities;
@@ -16,10 +15,11 @@ using FlaxEditor.Windows;
 using FlaxEngine;
 using FlaxEngine.GUI;
 using FlaxEngine.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using DockHintWindow = FlaxEditor.GUI.Docking.DockHintWindow;
 using MasterDockPanel = FlaxEditor.GUI.Docking.MasterDockPanel;
-using FlaxEditor.Content.Settings;
-using FlaxEditor.Options;
 
 namespace FlaxEditor.Modules
 {
@@ -37,6 +37,7 @@ namespace FlaxEditor.Modules
         private bool _progressFailed;
 
         ContextMenuSingleSelectGroup<int> _numberOfClientsGroup = new ContextMenuSingleSelectGroup<int>();
+        ContextMenuSingleSelectGroup<string> _recentProjectsGroup = new ContextMenuSingleSelectGroup<string> { };
 
         private ContextMenuButton _menuFileSaveScenes;
         private ContextMenuButton _menuFileReloadScenes;
@@ -512,6 +513,26 @@ namespace FlaxEditor.Modules
             };
 
             Editor.Options.OptionsChanged += options => { _numberOfClientsGroup.Selected = options.Interface.NumberOfGameClientsToLaunch; };
+
+            // fill in recent projects submenu
+            Editor.EditorCache.TryGetCustomData(Editor.EditorRecentProjects, out string recentProjectsVar);
+            if (recentProjectsVar != null)
+            {
+                List<string> recentProjects = JsonSerializer.Deserialize<List<string>>(recentProjectsVar);
+                // always put current project first
+                var current = Editor.GameProject.ProjectPath;
+                _recentProjectsGroup.AddItem(Path.GetFileName(current), current, null, current);
+
+                for (int i = recentProjects.Count - 1; i >= 0; i--)
+                {
+                    if (recentProjects[i] == current) continue;
+                    var project = recentProjects[i].Replace("\"", "");
+                    var projectNormalized = StringUtils.NormalizePath(project);
+                    _recentProjectsGroup.AddItem(Path.GetFileName(projectNormalized), projectNormalized, null, projectNormalized);
+                }
+                _recentProjectsGroup.SelectedChanged = value => Editor.OpenProject(value);
+
+            }
         }
 
         private void InitMainMenu(RootControl mainWindow)
@@ -531,6 +552,11 @@ namespace FlaxEditor.Modules
             _menuFileSaveScenes = cm.AddButton("Save scenes", inputOptions.SaveScenes, Editor.Scene.SaveScenes);
             _menuFileCloseScenes = cm.AddButton("Close scenes", inputOptions.CloseScenes, Editor.Scene.CloseAllScenes);
             _menuFileReloadScenes = cm.AddButton("Reload scenes", Editor.Scene.ReloadScenes);
+
+            cm.AddSeparator();
+            var recentProjectSubMenu = cm.AddChildMenu("Open recent project");
+            _recentProjectsGroup.AddItemsToContextMenu(recentProjectSubMenu.ContextMenu);
+
             cm.AddSeparator();
             _menuFileOpenScriptsProject = cm.AddButton("Open scripts project", inputOptions.OpenScriptsProject, Editor.CodeEditing.OpenSolution);
             _menuFileGenerateScriptsProjectFiles = cm.AddButton("Generate scripts project files", inputOptions.GenerateScriptsProject, Editor.ProgressReporting.GenerateScriptsProjectFiles.RunAsync);

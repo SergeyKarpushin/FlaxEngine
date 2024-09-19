@@ -2,6 +2,7 @@
 
 using System.ComponentModel;
 using FlaxEngine;
+using static FlaxEditor.Options.GeneralOptions;
 
 namespace FlaxEditor.Options
 {
@@ -11,6 +12,24 @@ namespace FlaxEditor.Options
     [CustomEditor(typeof(Editor<GeneralOptions>))]
     public sealed class GeneralOptions
     {
+
+        /// <summary>
+        /// The editor startup scene modes.
+        /// </summary>
+        public enum StartupProjectModes
+        {
+            /// <summary>
+            /// Don't open a project on startup.
+            /// </summary>
+            None,
+
+            /// <summary>
+            /// The last opened project in the editor.
+            /// </summary>
+            LastOpened,
+        }
+
+
         /// <summary>
         /// The editor startup scene modes.
         /// </summary>
@@ -85,6 +104,13 @@ namespace FlaxEditor.Options
             [Tooltip("Shows properties/fields in declaration order")]
             Declaration
         }
+
+        /// <summary>
+        /// Gets or sets the project to load on editor startup.
+        /// </summary>
+        [DefaultValue(StartupProjectModes.LastOpened)]
+        [EditorDisplay("General"), EditorOrder(05), Tooltip("The project to load on editor startup")]
+        public StartupProjectModes StartupProjectMode { get; set; } = StartupProjectModes.LastOpened;
 
         /// <summary>
         /// Gets or sets the scene to load on editor startup.
